@@ -6,7 +6,7 @@ fn parser<'a>() -> Parser<'a, u8, Vec<i32>> {
     let number = digit.repeat(1..).collect().convert(str::from_utf8).convert(|s|i32::from_str_radix(&s, 10))
     ;
     let direction = sym(b'L').map(|_| -1) | sym(b'R').map(|_| 1);
-    let line = (direction + number).map(|(dir, dist)| (dir, dist));
+    let line = direction + number;
     let newline = one_of(b"\r\n");
     ((line - newline).map(|(dir, dist)| dir * dist)).repeat(1..)
 }
