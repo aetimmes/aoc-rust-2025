@@ -49,7 +49,7 @@ pub fn part_one(input: &str) -> Option<u64> {
     part_one_inner(input, Some(1000))
 }
 
-pub fn parse(input: &str) -> Option<(HashSet<Point>, Vec<Segment>)> {
+fn parse(input: &str) -> Option<(HashSet<Point>, Vec<Segment>)> {
     let mut points: HashSet<Point> = HashSet::new();
     let mut segments: Vec<Segment> = Vec::new();
     for line in input.lines() {
@@ -125,9 +125,8 @@ pub fn part_two(input: &str) -> Option<u64> {
 
     let mut g: HashMap<Point, u64> = HashMap::new();
     let mut i: u64 = 0;
-    let mut segments_iter = segments.iter();
     let mut seen: HashSet<Point> = HashSet::new();
-    for s in segments_iter {
+    for s in segments {
         let p1 = s.points[0];
         let p2 = s.points[1];
         if g.contains_key(&p1) && g.contains_key(&p2) {
