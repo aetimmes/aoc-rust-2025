@@ -49,11 +49,7 @@ pub fn part_one(input: &str) -> Option<u64> {
     part_one_inner(input, Some(1000))
 }
 
-pub fn part_one_inner(input: &str, n: Option<u64>) -> Option<u64> {
-    let iters: u64 = match n {
-        Some(inner) => inner,
-        None => 1000,
-    };
+pub fn parse(input: &str) -> Option<(HashSet<Point>, Vec<Segment>)> {
     let mut points: HashSet<Point> = HashSet::new();
     let mut segments: Vec<Segment> = Vec::new();
     for line in input.lines() {
@@ -71,6 +67,16 @@ pub fn part_one_inner(input: &str, n: Option<u64>) -> Option<u64> {
     }
 
     segments.sort();
+    Some((points, segments))
+}
+
+pub fn part_one_inner(input: &str, n: Option<u64>) -> Option<u64> {
+    let iters: u64 = match n {
+        Some(inner) => inner,
+        None => 1000,
+    };
+
+    let (_, segments) = parse(input)?;
 
     let mut g: HashMap<Point, u64> = HashMap::new();
     let mut i: u64 = 0;
@@ -114,7 +120,42 @@ pub fn part_one_inner(input: &str, n: Option<u64>) -> Option<u64> {
     )
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
+pub fn part_two(input: &str) -> Option<u64> {
+    let (points, segments) = parse(input)?;
+
+    let mut g: HashMap<Point, u64> = HashMap::new();
+    let mut i: u64 = 0;
+    let mut segments_iter = segments.iter();
+    let mut seen: HashSet<Point> = HashSet::new();
+    for s in segments_iter {
+        let p1 = s.points[0];
+        let p2 = s.points[1];
+        if g.contains_key(&p1) && g.contains_key(&p2) {
+            if g[&p1] != g[&p2] {
+                let old = g[&p2];
+                for (k, v) in g.clone() {
+                    if v == old {
+                        g.insert(k, g[&p1]);
+                    }
+                }
+            }
+        } else if !g.contains_key(&p1) && !g.contains_key(&p2) {
+            g.insert(p1, i);
+            g.insert(p2, i);
+            i += 1;
+        } else if g.contains_key(&p1) {
+            g.insert(p2, g[&p1]);
+        } else if g.contains_key(&p2) {
+            g.insert(p1, g[&p2]);
+        }
+        seen.insert(p1);
+        seen.insert(p2);
+        if seen == points {
+            if g.values().tuple_windows().all(|w: (&u64, &u64)| w.0 == w.1) {
+                return Some(p1.coords[0] * p2.coords[0]);
+            }
+        }
+    }
     None
 }
 
@@ -142,6 +183,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(25272));
     }
 }
