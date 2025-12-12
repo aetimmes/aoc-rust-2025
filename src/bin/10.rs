@@ -2,7 +2,6 @@ advent_of_code::solution!(10);
 
 use pom::parser::*;
 use std::collections::HashSet;
-use rayon::prelude::*;
 
 fn two_bits(mut v: Vec<u64>) -> u64 {
     v.reverse();
@@ -91,8 +90,12 @@ pub fn part_one(input: &str) -> Option<u64> {
 
 pub fn part_two(input: &str) -> Option<u64> {
     let lines: Vec<&str> = input.lines().collect();
-    let sum = lines.par_iter().map(|line| part_two_inner(line)).sum();
-    Some(sum)
+    let mut result = 0_u64;
+    for line in lines {
+        result += part_two_inner(line);
+        println!("new result: {:?}", result);
+    }
+    Some(result)
 }
 
 fn part_two_inner(input: &str) -> u64 {
@@ -134,6 +137,7 @@ fn part_two_inner(input: &str) -> u64 {
         }
         curr = next;
     }
+    println!("{:?}", i);
     i
 }
 
