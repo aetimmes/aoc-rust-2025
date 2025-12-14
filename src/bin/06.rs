@@ -16,7 +16,7 @@ fn numbers<'a>() -> Parser<'a, u8, Vec<u64>> {
 }
 
 fn newline<'a>() -> Parser<'a, u8, ()> {
-    one_of(b"\r\n").discard()
+    one_of(b"\r\n").repeat(1..).discard()
 }
 
 fn space<'a>() -> Parser<'a, u8, ()> {
@@ -31,9 +31,17 @@ fn parser<'a>() -> Parser<'a, u8, (Vec<Vec<u64>>, Vec<char>)> {
     numbers().repeat(1..) + operations()
 }
 
+fn parser2<'a>() -> Parser<'a, u8, Vec<((u64, char), Vec<u64>)>> {
+    newline().discard() *
+    list(
+        (space().opt() * number() - space().opt()) + operator() - space().opt() - newline() + list(space().opt() * number() - space().opt(), newline()),
+        newline()
+    )
+}
+
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
     assert!(!v.is_empty());
-    let len = v[0].len();
+    let len = v.iter().map(|row| row.len()).min().unwrap_or(0);
     let mut iters: Vec<_> = v.into_iter().map(|n| n.into_iter()).collect();
     (0..len)
         .map(|_| {
@@ -63,8 +71,19 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(result)
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let lines: Vec<Vec<u8>> = input.lines().filter(|x| !x.is_empty()).map(|x| x.as_bytes().to_vec()).collect();
+    let transposed = transpose(lines).iter().fold(String::new(), |acc, x| acc + "\n" + &String::from_utf8_lossy(x));
+    let entries = parser2().parse(transposed.as_bytes()).ok()?;
+    Some(entries.iter().fold(0_u64, |acc: u64, x: &((u64, char), Vec<u64>)| acc + run_ops(x.clone())))
+}
+
+fn run_ops(((base, op), nums): ((u64, char), Vec<u64>)) -> u64 {
+    if op == '*' {
+        nums.iter().fold(base, |acc, x| acc * x)
+    } else{
+        nums.iter().fold(base, |acc, x| acc + x)
+    }
 }
 
 #[cfg(test)]
@@ -80,6 +99,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(3263827));
     }
 }
